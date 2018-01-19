@@ -3222,7 +3222,7 @@ J2.QueryString = location.search.slice(1).unDelimit();
 		this.showTab(0, tabSetCssData);
 		
 		var me = this;
-		function handleTabClick(e) {
+		function handleTabClick() {
 			var tabIndex = this.tabIndex;
 			me.hideTab();
 			me.showTab(tabIndex);
@@ -3421,13 +3421,17 @@ J2.URL = new (function() {
 			startChecking();
 		}
 		function getURLObject() {
-			var url = getBrowserUrl(), urlObject = {}, key, value, itemData;
+			var url = getBrowserUrl(),
+				urlObject = {},
+				key,
+				itemData;
 			url = url.split(delim);
 			for (var i = url.length-1; i>=0; i--) {
 				itemData = url[i].split("=");
 				key = itemData[0];
 				urlObject[key] = itemData.slice(1).join("=");
 			}
+
 			return urlObject;
 		}
 		/**
