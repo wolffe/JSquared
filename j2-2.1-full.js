@@ -1,45 +1,41 @@
-//  ---------------------------------------------------------------------------------------------------------
-//  --- license header; ---
-//  ---------------------------------------------------------------------------------------------------------
-/*  Copyright (c) 2007 - 2009 by James Norton
-	info@jsquaredjavascript.com
-  
-    This file is part of JSquared.
-    
-    JSquared is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
- 
-    JSquared is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Lesser General Public License for more details.
- 
-    You should have received a copy of the GNU Lesser General Public License
-    along with JSquared.  If not, see <http://www.gnu.org/licenses/>.
-*/
-//  ---------------------------------------------------------------------------------------------------------
-//  ---------------------------------------------------------------------------------------------------------
-/**
-* @fileOverview JSquared Core Library
-* @name JSquared
-*/
-/**
-* @namespace Root namespace for holding all JSquared objects
-* @name J2
-*/
-/**
-* The version of the library in use
-* @name version
-* @memberOf J2
-* @type Float
-*/
+/*!
+ * JSquared v2.1.1
+ * https://getbutterfly.com/jsquared/
+ *
+ * Copyright (c) 2009-2018 by Ciprian Popescu
+ * Copyright (c) 2007-2009 by James Norton
+ *
+ * This file is part of JSquared.
+ *
+ * JSquared is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * JSquared is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with JSquared.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ *
+ * @fileOverview JSquared Core Library
+ * @name JSquared
+ *
+ * @namespace Root namespace for holding all JSquared objects
+ * @name J2
+ *
+ * The version of the library in use
+ * @name version
+ * @memberOf J2
+ * @type Float
+ */
 /*@cc_on @*/
 var J2 = new (function() {
-	this.version = 2.1;
-	this.isIE = /*@cc_on!@*/!1;
-	this.isIE6 = this.isIE && !window.XMLHttpRequest;
+	this.version = '2.1.1';
 });
 /**
 * @namespace Container for core JSquared functions and objects
@@ -258,30 +254,20 @@ J2.Core = new (function() {
 	loadEventHandler.listen( function() { delete loadEventIndexes; delete addLoadEvent; }, window, -Infinity );
 	domReadyEventHandler.listen( function() { delete DOMReadyEventIndexes; delete addDOMReadyEvent; }, window, -Infinity );
 	
-		/* Internet Explorer */
-	if (J2.isIE6) {
-		document.write("<script id=\"ieScriptLoad\" defer src=\"//:\"><\/script>");
-		document.getElementById("ieScriptLoad").onreadystatechange = function() {
-			if (this.readyState === "complete") {
-				document.getElementById("ieScriptLoad").parentNode.removeChild(document.getElementById("ieScriptLoad"));
+	if (navigator.userAgent.search(/WebKit/i) !== -1) {
+		window.DOMLoadTimer = setInterval(function () {
+			if (document.readyState.search(/loaded|complete/i) !== -1) {
+				clearInterval(window.DOMLoadTimer);
 				domReadyEventHandler.fire({});
 			}
-		};
-	} else {
-		if (navigator.userAgent.search(/WebKit/i) !== -1) {
-			window.DOMLoadTimer = setInterval(function () {
-				if (document.readyState.search(/loaded|complete/i) !== -1) {
-					clearInterval(window.DOMLoadTimer);
-					domReadyEventHandler.fire({});
-				}
-			}, 10);
-		}
-		if (document.addEventListener) {
-			document.addEventListener("DOMContentLoaded", function(e) {clearInterval(window.DOMLoadTimer);domReadyEventHandler.fire.call(this,e);}, false);
-		} else {
-			window.addLoadEvent( domReadyEventHandler.fire, null, 1000 );
-		}
+		}, 10);
 	}
+	if (document.addEventListener) {
+		document.addEventListener("DOMContentLoaded", function(e) {clearInterval(window.DOMLoadTimer);domReadyEventHandler.fire.call(this,e);}, false);
+	} else {
+		window.addLoadEvent( domReadyEventHandler.fire, null, 1000 );
+	}
+
 	//Element binding tools
 	var boundElements = [];
 	/**
@@ -1309,17 +1295,10 @@ J2.Element = new (function() {
 	* @return {Node} The node this method acts upon
 	*/
 	this.setOpacity = function() {
-		if (J2.isIE) {
-			return function(opacityLevel) {
-				this.style.filter = (opacityLevel == 1) ? '' : "alpha(opacity=" + opacityLevel * 100 + ")";
-				return this;
-			};
-		} else {
-			return function(opacityLevel) {
-				this.style.opacity = opacityLevel;
-				return this;
-			};
-		}
+		return function(opacityLevel) {
+			this.style.opacity = opacityLevel;
+			return this;
+		};
 	}();
 	/**
 	* Set a CSS style value on a node.
@@ -1344,7 +1323,7 @@ J2.Element = new (function() {
 		if (property === "opacity")
 			return this.setOpacity(value);
 		if (property === "float")
-			property = (J2.isIE) ? "styleFloat" : "cssFloat";
+			property = "cssFloat";
 		if (/color/i.test(property)) {
 			if (!(value instanceof J2.Core.CSSColor))
 				value = J2.Core.CSSColor.prototype.create(value);
@@ -1371,12 +1350,8 @@ J2.Element = new (function() {
 	this.getStyle = this.getOpacity = function(property) {
 		property = property.hyphenatedToCamelCase();
 		//detect special cases for properties
-		if (property === "opacity" && J2.isIE) {
-			var opacityLevel = arguments.callee.call(this, "filter");
-			return opacityLevel === "" ? 1 : parseFloat(opacityLevel.split("=")[1]) / 100;
-		}
 		if (property === "float")
-			property = (J2.isIE) ? "styleFloat" : "cssFloat";
+			property = "cssFloat";
 		var property_value = null;
 		//get the value as best as the browser will allow
 		if (this.currentStyle) {
@@ -1734,12 +1709,12 @@ J2.Element = new (function() {
 			e.stop = function() {
 				this.preventDefault();
 				this.stopPropagation();
-			}
+			};
 			//call the old fire method
 			return eventHandler.oldFire(e);
 		};
 		return eventHandler;
-	};
+	}
 	/**
 	* Add an event handler to a DOM node for an event type.
 	* This is for adding event handlers for standard DOM events.
@@ -1759,11 +1734,11 @@ J2.Element = new (function() {
 	this.addEvent = function(type, fn, sortIndex) {
 		if (typeof fn !== "function") return;
 		type = type.toLowerCase();
-		if (!J2.isIE) {
-			if (type === "mouseleave" || type === "mouseenter") {
-				mouseEvents[type](this, fn, sortIndex);
-			}
+
+		if (type === "mouseleave" || type === "mouseenter") {
+			mouseEvents[type](this, fn, sortIndex);
 		}
+
 		if (!this.events) this.events = {};
 		if (!this.events[type]) {
 			this.events[type] = new DOMEvent();
@@ -2854,7 +2829,7 @@ J2.AutoComplete = function(field, data, options) {
 			if (e.keyCode === 38)
 				highlightNextNode(-1);
 		}
-	};
+	}
 	function buildNodeList( dataSet ) {
 		var filter = field.value.trim();
 		rootDisplayNode.removeAllChildren();
@@ -3282,12 +3257,12 @@ J2.QueryString = location.search.slice(1).unDelimit();
 		function addActivator() {
 			var content = document.getElementById(this.hash.slice(1));
 			if (content) {
-				tabSetData.push( {
+				tabSetData.push({
 					activator: this,
 					content: content
-				} );
+				});
 			}
-		};
+		}
 	}
 	
 	J2.Core.addElementTool("makeTabset", function(options) {
