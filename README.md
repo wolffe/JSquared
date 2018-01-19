@@ -1,0 +1,2 @@
+# JSquared
+A JavaScript Library
